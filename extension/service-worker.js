@@ -31,6 +31,12 @@ async function poll() {
     const data = await res.json();
     if (!data.job) return;
 
+    if (data.job.intent !== 'skip') {
+      const query = encodeURIComponent(data.job.query || (data.job.candidate && data.job.candidate.title) || '');
+      await chrome.tabs.update(tab.id, { url: 'https://music.youtube.com/search?q=' + query });
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+    }
+
     const response = await chrome.tabs.sendMessage(tab.id, { type: 'ytm-queue-job', job: data.job });
     const ok = !!(response && response.ok);
     await fetch(BACKEND + '/api/worker/jobs/' + data.job.id + '/report', {
