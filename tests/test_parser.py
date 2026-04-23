@@ -11,3 +11,15 @@ def test_parse_next_command():
 def test_parse_unknown_text():
     parsed = parse_message('hello team')
     assert parsed.intent == Intent.UNKNOWN
+
+
+def test_parse_play_phrase_as_play_next():
+    parsed = parse_message('play solo by fred again')
+    assert parsed.intent == Intent.PLAY_NEXT
+    assert parsed.query == 'solo by fred again'
+
+
+def test_queue_alias_still_plays_next():
+    parsed = parse_message('/queue yellow coldplay')
+    assert parsed.intent == Intent.PLAY_NEXT
+    assert parsed.query == 'yellow coldplay'

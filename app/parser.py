@@ -4,8 +4,10 @@ from app.models import Intent, ParsedCommand
 
 COMMAND_ALIASES = {
     "/next": Intent.PLAY_NEXT,
-    "/queue": Intent.ADD_TO_QUEUE,
-    "/add": Intent.ADD_TO_QUEUE,
+    "/play": Intent.PLAY_NEXT,
+    "play": Intent.PLAY_NEXT,
+    "/queue": Intent.PLAY_NEXT,
+    "/add": Intent.PLAY_NEXT,
     "/nowplaying": Intent.NOW_PLAYING,
     "/np": Intent.NOW_PLAYING,
     "/skip": Intent.SKIP,
