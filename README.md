@@ -55,7 +55,7 @@ pytest
 
 ## Real YouTube Music search setup
 
-1. Open YouTube Music in Chrome and sign in.
+1. Open YouTube Music in Brave or another Chromium browser and sign in.
 2. Export your request headers/cookies using `ytmusicapi`'s auth export flow.
    Typical output is a JSON file like `browser.json`.
 3. Set:
@@ -77,8 +77,8 @@ Otherwise it falls back to `static`.
 
 ## Real browser execution setup
 
-1. Keep a `music.youtube.com` tab open in Chrome.
-2. Load the unpacked extension from `extension/`.
+1. Keep a `music.youtube.com` tab open in Brave or another Chromium browser.
+2. Load the unpacked extension from `extension/`. In Brave, open `brave://extensions`, enable **Developer mode**, then **Load unpacked**.
 3. Start the backend on port `8015`.
 4. Send `/next <song>` or `/queue <song>` in Telegram.
 
