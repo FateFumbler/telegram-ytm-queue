@@ -2,7 +2,7 @@ const BACKEND = 'http://127.0.0.1:8015';
 
 async function getYtmTab() {
   const tabs = await chrome.tabs.query({ url: '*://music.youtube.com/*' });
-  return tabs[0] || null;
+  return tabs.length > 0 ? tabs[0] : null;
 }
 
 async function pushState(tabId) {
@@ -38,9 +38,9 @@ async function poll() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ok,
-        detail: response?.detail || (ok ? 'Extension executed queue action' : 'Extension failed to execute queue action'),
+        detail: response?.detail ? response.detail : (ok ? 'Extension executed queue action' : 'Extension failed to execute queue action'),
         worker_id: 'extension',
-        now_playing: response?.nowPlaying || null,
+        now_playing: response?.nowPlaying ? response.nowPlaying : null,
         action: data.job.intent,
       }),
     });
@@ -50,11 +50,11 @@ async function poll() {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create('poll-backend', { periodInMinutes: 0.1 });
+  chrome.alarms.create('poll-backend', { periodInMinutes: 0.5 });
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create('poll-backend', { periodInMinutes: 0.1 });
+  chrome.alarms.create('poll-backend', { periodInMinutes: 0.5 });
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
