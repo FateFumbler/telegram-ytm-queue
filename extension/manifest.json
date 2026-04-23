@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Telegram YTM Queue Bridge",
   "version": "0.1.0",
-  "permissions": ["storage", "tabs", "scripting"],
+  "permissions": ["storage", "tabs", "scripting", "alarms"],
   "host_permissions": ["http://127.0.0.1:8015/*", "https://music.youtube.com/*"],
   "background": {"service_worker": "service-worker.js"},
   "content_scripts": [
