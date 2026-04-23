@@ -30,3 +30,18 @@ def test_duplicate_detection(tmp_path):
     second = svc.create_song_request(chat_id=1, user_id=2, username='tushar', message_id=11, intent=Intent.ADD_TO_QUEUE, query='husn anuv jain', dedupe_window_seconds=120)
     assert first.request_id is not None
     assert 'Already queued recently' in second.text
+
+
+def test_stale_queued_request_is_claimable_again(tmp_path):
+    svc = make_service(tmp_path)
+    res = svc.create_song_request(chat_id=1, user_id=2, username='tushar', message_id=10, intent=Intent.PLAY_NEXT, query='yellow coldplay', dedupe_window_seconds=120)
+    assert res.request_id is not None
+    first_job = svc.next_job()
+    assert first_job is not None
+    assert first_job['status'] == RequestStatus.QUEUED.value
+
+    with svc.db.connect() as conn:
+        conn.execute("UPDATE queue_requests SET updated_at = ? WHERE id = ?", ("2000-01-01 00:00:00", res.request_id))
+    retried_job = svc.next_job()
+    assert retried_job is not None
+    assert retried_job['id'] == res.request_id

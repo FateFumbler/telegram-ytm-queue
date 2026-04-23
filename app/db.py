@@ -100,7 +100,14 @@ class Database:
 
     def next_ready_request(self) -> dict[str, Any] | None:
         with self.connect() as conn:
-            row = conn.execute("SELECT * FROM queue_requests WHERE status = 'ready' ORDER BY id ASC LIMIT 1").fetchone()
+            row = conn.execute(
+                """
+                SELECT * FROM queue_requests
+                WHERE status = 'ready'
+                   OR (status = 'queued' AND updated_at <= datetime('now', '-20 seconds'))
+                ORDER BY id ASC LIMIT 1
+                """
+            ).fetchone()
         return dict(row) if row else None
 
     def pending_candidates(self, request_id: int) -> list[SongCandidate]:
