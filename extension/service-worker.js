@@ -23,9 +23,13 @@ async function pushState(tabId) {
 }
 
 async function poll() {
+  let currentJobId = null;
+  let currentAction = null;
   try {
     const stored = await chrome.storage.local.get(IN_FLIGHT_KEY);
-    if (stored && stored[IN_FLIGHT_KEY]) return;
+    const inFlight = stored ? stored[IN_FLIGHT_KEY] : null;
+    if (inFlight && Date.now() - inFlight.startedAt < 60000) return;
+    if (inFlight) await chrome.storage.local.remove(IN_FLIGHT_KEY);
 
     const tab = await getYtmTab();
     if (!tab || !tab.id) return;
@@ -36,7 +40,9 @@ async function poll() {
     const data = await res.json();
     if (!data.job) return;
 
-    await chrome.storage.local.set({ [IN_FLIGHT_KEY]: data.job.id });
+    currentJobId = data.job.id;
+    currentAction = data.job.intent;
+    await chrome.storage.local.set({ [IN_FLIGHT_KEY]: { id: data.job.id, startedAt: Date.now() } });
 
     if (data.job.intent !== 'skip') {
       const query = encodeURIComponent(data.job.query || (data.job.candidate && data.job.candidate.title) || '');
@@ -45,7 +51,7 @@ async function poll() {
       await new Promise((resolve) => setTimeout(resolve, 2500));
     }
 
-    const response = await chrome.tabs.sendMessage(tab.id, { type: 'ytm-queue-job', job: data.job });
+    const response = await withTimeout(chrome.tabs.sendMessage(tab.id, { type: 'ytm-queue-job', job: data.job }), 20000, 'Timed out waiting for content script response');
     const ok = !!(response && response.ok);
     await fetch(BACKEND + '/api/worker/jobs/' + data.job.id + '/report', {
       method: 'POST',
@@ -61,8 +67,38 @@ async function poll() {
     await chrome.storage.local.remove(IN_FLIGHT_KEY);
   } catch (e) {
     console.debug('poll failed', e);
+    if (currentJobId) {
+      try {
+        await fetch(BACKEND + '/api/worker/jobs/' + currentJobId + '/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ok: false,
+            detail: e && e.message ? e.message : String(e),
+            worker_id: 'extension',
+            now_playing: null,
+            action: currentAction,
+          }),
+        });
+      } catch (reportError) {
+        console.debug('job failure report failed', reportError);
+      }
+    }
     await chrome.storage.local.remove(IN_FLIGHT_KEY);
   }
+}
+
+function withTimeout(promise, timeoutMs, message) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then((value) => {
+      clearTimeout(timeout);
+      resolve(value);
+    }).catch((error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
 }
 
 function waitForTabComplete(tabId) {
