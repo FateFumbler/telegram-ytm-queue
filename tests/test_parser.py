@@ -23,3 +23,14 @@ def test_queue_alias_still_plays_next():
     parsed = parse_message('/queue yellow coldplay')
     assert parsed.intent == Intent.PLAY_NEXT
     assert parsed.query == 'yellow coldplay'
+
+
+def test_bare_song_text_defaults_to_play_next():
+    parsed = parse_message('solo by fred again')
+    assert parsed.intent == Intent.PLAY_NEXT
+    assert parsed.query == 'solo by fred again'
+
+
+def test_greeting_is_not_treated_as_song_request():
+    parsed = parse_message('hey')
+    assert parsed.intent == Intent.UNKNOWN

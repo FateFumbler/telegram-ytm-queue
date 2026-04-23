@@ -14,6 +14,15 @@ COMMAND_ALIASES = {
     "/help": Intent.HELP,
 }
 
+IGNORED_FREEFORM = {
+    "hi",
+    "hey",
+    "hello",
+    "yo",
+    "thanks",
+    "thank you",
+}
+
 
 def parse_message(text: str) -> ParsedCommand:
     normalized = (text or "").strip()
@@ -25,4 +34,9 @@ def parse_message(text: str) -> ParsedCommand:
     intent = COMMAND_ALIASES.get(head)
     if intent:
         return ParsedCommand(intent=intent, query=tail, raw_text=text)
-    return ParsedCommand(intent=Intent.UNKNOWN, raw_text=text, query=normalized)
+    lowered = normalized.lower()
+    if lowered in IGNORED_FREEFORM or lowered.startswith(("hi ", "hey ", "hello ")):
+        return ParsedCommand(intent=Intent.UNKNOWN, raw_text=text, query=normalized)
+    if lowered in {"now playing", "what's playing", "whats playing"}:
+        return ParsedCommand(intent=Intent.NOW_PLAYING, raw_text=text, query=normalized)
+    return ParsedCommand(intent=Intent.PLAY_NEXT, raw_text=text, query=normalized)
