@@ -49,14 +49,27 @@ async function poll() {
   }
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+function schedulePoll() {
   chrome.alarms.create('poll-backend', { periodInMinutes: 0.5 });
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  schedulePoll();
+  poll();
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create('poll-backend', { periodInMinutes: 0.5 });
+  schedulePoll();
+  poll();
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'poll-backend') poll();
 });
+
+chrome.action.onClicked.addListener(() => {
+  poll();
+});
+
+schedulePoll();
+poll();
